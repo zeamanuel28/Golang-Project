@@ -63,6 +63,8 @@ func (s *UserService) UpdateUser(user *models.User) (*models.User, error) {
 	// Password update should be handled separately if it's a security concern.
 	existingUser.Username = user.Username
 	existingUser.Email = user.Email
+	existingUser.Name.FirstName = user.Name.FirstName
+	existingUser.Name.LastName = user.Name.LastName
 
 	if err := s.db.Save(existingUser).Error; err != nil {
 		return nil, err
