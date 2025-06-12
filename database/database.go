@@ -41,7 +41,18 @@ func InitDB() (*gorm.DB, error) {
 // Migrate runs database migrations (auto-migrate models)
 func Migrate(db *gorm.DB) {
 	log.Println("Running database migrations...")
-	err := db.AutoMigrate(&models.User{})
+
+	// Drop tables before migration ONLY in development/testing (optional)
+	// ⚠️ WARNING: This will delete all data. Use carefully.
+	// _ = db.Migrator().DropTable(&models.Book{}, &models.User{})
+
+	// AutoMigrate should run in correct order: parent before child
+	db.Migrator().DropTable(&models.Book{}, &models.User{})
+	err := db.AutoMigrate(
+		&models.User{},
+		&models.Book{},
+	)
+
 	if err != nil {
 		log.Fatalf("Database migration failed: %v", err)
 	}

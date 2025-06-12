@@ -19,6 +19,7 @@ func SetupUserRoutes(router *gin.Engine, db *gorm.DB) {
 		userRoutes.GET("/:id", userController.GetUserByID)
 		userRoutes.GET("/", userController.GetAllUsers)
 		userRoutes.GET("/login", userController.Login)
+		userRoutes.DELETE("/:id", userController.DeleteUser)
 
 		// Authenticated routes
 		authenticatedRoutes := userRoutes.Group("/")
@@ -26,7 +27,7 @@ func SetupUserRoutes(router *gin.Engine, db *gorm.DB) {
 		{
 
 			authenticatedRoutes.PUT("/:id", userController.UpdateUser)
-			authenticatedRoutes.DELETE("/:id", userController.DeleteUser)
+			//authenticatedRoutes.DELETE("/:id", userController.DeleteUser)
 		}
 	}
 }

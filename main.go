@@ -34,6 +34,7 @@ func main() {
 
 	// Pass the DB instance to routes
 	routes.SetupUserRoutes(router, db)
+	routes.RegisterBookRoutes(router, db)
 
 	// Start the server
 	port := config.AppConfig.Port
