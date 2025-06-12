@@ -14,20 +14,24 @@ func SetupUserRoutes(router *gin.Engine, db *gorm.DB) {
 
 	userRoutes := router.Group("/users")
 	{
-		// Public routes for demonstration (e.g., user creation doesn't require auth)
-		userRoutes.POST("/", userController.CreateUser)
-		userRoutes.GET("/:id", userController.GetUserByID)
-		userRoutes.GET("/", userController.GetAllUsers)
-		userRoutes.GET("/login", userController.Login)
-		userRoutes.DELETE("/:id", userController.DeleteUser)
+		// Public routes (no auth required)
+		userRoutes.POST("/", userController.CreateUser)    // Register user
+		userRoutes.POST("/login", userController.Login)    // Login (POST)
+		userRoutes.GET("/:id", userController.GetUserByID) // Get user by ID
+		userRoutes.GET("/", userController.GetAllUsers)    // Get all users
 
-		// Authenticated routes
+		// Routes that require authentication
 		authenticatedRoutes := userRoutes.Group("/")
-		authenticatedRoutes.Use(middleware.AuthMiddleware()) // Apply authentication middleware
+		authenticatedRoutes.Use(middleware.AuthMiddleware())
 		{
+			authenticatedRoutes.PUT("/:id", userController.UpdateUser) // Update user info
 
-			authenticatedRoutes.PUT("/:id", userController.UpdateUser)
-			//authenticatedRoutes.DELETE("/:id", userController.DeleteUser)
+			// Admin-only routes nested under authenticated routes
+			adminRoutes := authenticatedRoutes.Group("/admin")
+			adminRoutes.Use(middleware.RoleAuthorization("admin"))
+			{
+				adminRoutes.DELETE("/:id", userController.DeleteUser) // Delete user (admin only)
+			}
 		}
 	}
 }

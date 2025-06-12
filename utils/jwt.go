@@ -9,7 +9,8 @@ import (
 
 // Define a struct for custom JWT claims (payload)
 type Claims struct {
-	UserID uint `json:"user_id"`
+	UserID uint   `json:"user_id"`
+	Role   string `json:"role"`
 	jwt.RegisteredClaims
 }
 
@@ -18,11 +19,13 @@ type Claims struct {
 var jwtSecret = []byte("your_super_secret_jwt_key_that_is_at_least_32_bytes_long")
 
 // GenerateToken generates a new JWT for the given user ID
-func GenerateToken(userID uint) (string, error) {
+func GenerateToken(userID uint, role string) (string, error) {
 	expirationTime := time.Now().Add(24 * time.Hour) // Token expires in 24 hours
 
 	claims := &Claims{
 		UserID: userID,
+		Role:   role, // Include the role in the token
+
 		RegisteredClaims: jwt.RegisteredClaims{
 			ExpiresAt: jwt.NewNumericDate(expirationTime),
 			IssuedAt:  jwt.NewNumericDate(time.Now()),

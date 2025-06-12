@@ -23,54 +23,47 @@ func NewUserController(db *gorm.DB) *UserController {
 	}
 }
 
-// CreateUser handles user registration and generates a token upon successful creation.
 func (uc *UserController) CreateUser(c *gin.Context) {
-	var user models.User // User model (or UserCreateInput DTO if you chose that approach)
+	var user models.User
+
 	if err := c.ShouldBindJSON(&user); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
-	// Important: If models.User.Password still has `json:"-"`, this field
-	// will be empty here. You need to ensure the Password from the request
-	// is properly bound. If you're not using a DTO, you must change
-	// `json:"-"` to `json:"password"` in models.User for `CreateUser` to work
-	// correctly with the incoming password. Or, as in the previous example,
-	// manually extract it from a map if you absolutely refuse DTOs and `json` tag.
-	// Assuming models.User's Password field has `json:"password"` now, OR
-	// you are using a separate DTO (like UserCreateInput) with json:"password".
-	// If you are sticking to `json:"-"` and no DTO for create, you would need
-	// to bind to a map[string]interface{} first, then manually construct `models.User`
-	// like we did for Login. For now, I'm assuming a bound 'user.Password'.
+	// ✅ Extract the role from the context (middleware must have set it)
+	requesterRole, exists := c.Get("userRole")
+	if !exists {
+		requesterRole = "user" // Default to user if not logged in
+	}
+
+	// 🔐 Only admins can assign 'admin' role
+	if user.Role == "admin" && requesterRole != "admin" {
+		c.JSON(http.StatusForbidden, gin.H{"error": "Only admin can assign admin role"})
+		return
+	}
 
 	if err := uc.userService.CreateUser(&user); err != nil {
-		// Handle specific database errors if needed (e.g., duplicate entry)
-		// For example, if you imported pq for PostgreSQL specific errors:
-		// if pgErr, ok := err.(*pq.Error); ok && pgErr.Code == "23505" {
-		//     c.JSON(http.StatusConflict, gin.H{"error": "Username or email already exists"})
-		//     return
-		// }
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create user"})
 		return
 	}
 
-	// --- NEW: Generate Token after successful user creation ---
-	token, err := utils.GenerateToken(user.ID)
+	// ✅ Generate token for the new user
+	token, err := utils.GenerateToken(user.ID, user.Role)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to generate token"})
 		return
 	}
 
-	// Respond with success message, user info (non-sensitive), and the token
 	c.JSON(http.StatusCreated, gin.H{
 		"message": "User created successfully",
 		"user": gin.H{
 			"ID":       user.ID,
 			"username": user.Username,
 			"email":    user.Email,
-			// Do NOT include Password here, even if it were possible
+			"role":     user.Role,
 		},
-		"token": token, // Include the generated token
+		"token": token,
 	})
 }
 
@@ -180,7 +173,7 @@ func (uc *UserController) Login(c *gin.Context) {
 	}
 
 	// --- NEW: Generate Token after successful authentication ---
-	token, err := utils.GenerateToken(authenticatedUser.ID)
+	token, err := utils.GenerateToken(authenticatedUser.ID, authenticatedUser.Role)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to generate token"})
 		return

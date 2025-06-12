@@ -47,7 +47,8 @@ func Migrate(db *gorm.DB) {
 	// _ = db.Migrator().DropTable(&models.Book{}, &models.User{})
 
 	// AutoMigrate should run in correct order: parent before child
-	db.Migrator().DropTable(&models.Book{}, &models.User{})
+	//db.Migrator().DropTable(&models.Book{}, &models.User{})
+	//db.Migrator().AddColumn(&models.User{}, "Role")
 	err := db.AutoMigrate(
 		&models.User{},
 		&models.Book{},
