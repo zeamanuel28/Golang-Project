@@ -42,13 +42,22 @@ func (s *UserService) GetUserByID(id uint) (*models.User, error) {
 	return &user, nil
 }
 
-// GetAllUsers retrieves all users
-func (s *UserService) GetAllUsers() ([]models.User, error) {
+// GetUsersPaginated retrieves a limited set of users based on pagination parameters
+func (s *UserService) GetUsersPaginated(limit, offset int) ([]models.User, int64, error) {
 	var users []models.User
-	if err := s.db.Find(&users).Error; err != nil {
-		return nil, err
+	var total int64
+
+	// Count total users for frontend pagination info
+	if err := s.db.Model(&models.User{}).Count(&total).Error; err != nil {
+		return nil, 0, err
 	}
-	return users, nil
+
+	// Fetch the limited users based on limit & offset
+	if err := s.db.Limit(limit).Offset(offset).Find(&users).Error; err != nil {
+		return nil, 0, err
+	}
+
+	return users, total, nil
 }
 
 // UpdateUser updates an existing user
