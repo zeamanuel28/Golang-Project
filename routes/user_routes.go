@@ -8,30 +8,22 @@ import (
 	"gorm.io/gorm"
 )
 
-// SetupUserRoutes sets up the routes for user-related operations
 func SetupUserRoutes(router *gin.Engine, db *gorm.DB) {
 	userController := controllers.NewUserController(db)
 
-	userRoutes := router.Group("/users")
-	{
-		// Public routes (no auth required)
-		userRoutes.POST("/", userController.CreateUser)    // Register user
-		userRoutes.POST("/login", userController.Login)    // Login (POST)
-		userRoutes.GET("/:id", userController.GetUserByID) // Get user by ID
-		userRoutes.GET("/", userController.GetAllUsers)    // Get all users
+	// Public endpoints (Swagger will pick these up)
+	router.POST("/users", userController.CreateUser)     // Register user
+	router.POST("/login", userController.Login)          // Login
+	router.GET("/users/:id", userController.GetUserByID) // Get user by ID
+	router.GET("/users", userController.GetAllUsers)     // Get all users
 
-		// Routes that require authentication
-		authenticatedRoutes := userRoutes.Group("/")
-		authenticatedRoutes.Use(middleware.AuthMiddleware())
-		{
-			authenticatedRoutes.PUT("/:id", userController.UpdateUser) // Update user info
+	// Protected routes (also visible to Swagger)
+	router.PUT("/users/:id", middleware.AuthMiddleware(), userController.UpdateUser)
 
-			// Admin-only routes nested under authenticated routes
-			adminRoutes := authenticatedRoutes.Group("/admin")
-			adminRoutes.Use(middleware.RoleAuthorization("admin"))
-			{
-				adminRoutes.DELETE("/:id", userController.DeleteUser) // Delete user (admin only)
-			}
-		}
-	}
+	// Admin-only route
+	router.DELETE("/users/admin/:id",
+		middleware.AuthMiddleware(),
+		middleware.RoleAuthorization("admin"),
+		userController.DeleteUser,
+	)
 }

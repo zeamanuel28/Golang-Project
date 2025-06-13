@@ -1,3 +1,10 @@
+// @title Golang API
+// @version 1.0
+// @description API documentation for Golang project
+// @host localhost:8080
+// @BasePath /
+// @schemes http
+
 package main
 
 import (

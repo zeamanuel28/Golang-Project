@@ -1,0 +1,12 @@
+# .dockerignore
+.git
+.gitignore
+.env
+.idea/
+.vscode/
+tmp/
+vendor/       # If you're using Go modules, this might not be needed if you rely on `go mod download`
+*.log
+*.swp
+Dockerfile
+docker-compose.yml

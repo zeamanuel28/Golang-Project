@@ -25,15 +25,16 @@ func NewUserController(db *gorm.DB) *UserController {
 }
 
 // CreateUser godoc
-// @Summary Register a new user
-// @Description Create a new user account
+// @Summary Create a new user
+// @Description Create a new user with role validation
 // @Tags users
 // @Accept json
 // @Produce json
-// @Param user body User true "User info"
-// @Success 201 {object} User
-// @Failure 400 {object} ErrorResponse
-// @Router /users/ [post]
+// @Param user body models.User true "User data"
+// @Success 201 {object} models.User
+// @Failure 400 {object} gin.H
+// @Failure 403 {object} gin.H
+// @Router /users [post]
 
 func (uc *UserController) CreateUser(c *gin.Context) {
 	var user models.User
